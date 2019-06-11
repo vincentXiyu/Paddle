@@ -203,7 +203,11 @@ __all__ = [
     'where',
     'sign',
     'deformable_conv',
+<<<<<<< HEAD
     'prod',
+=======
+    'unfold',
+>>>>>>> 40885c225b61fb6d7a413f6ef2a70ee73c3e995c
 ]
 
 kIgnoreIndex = -100
@@ -9267,8 +9271,8 @@ def stack(x, axis=0):
         .. code-block:: python
 
             import paddle.fluid.layers as layers
-            x1 = layers.data(name='x1', shape[1, 2], dtype='int32')
-            x2 = layers.data(name='x2', shape[1, 2], dtype='int32')
+            x1 = layers.data(name='x1', shape=[1, 2], dtype='int32')
+            x2 = layers.data(name='x2', shape=[1, 2], dtype='int32')
             data = layers.stack([x1,x2])
 
     """
@@ -9616,8 +9620,10 @@ def sum(x):
     Examples:
         .. code-block:: python
 
-            input = layers.data(name="input", shape=[13, 11], dtype='float32')
-            out = layers.sum(input)
+            import paddle.fluid.layers as layers
+            input0 = layers.data(name="input0", shape=[13, 11], dtype='float32')
+            input1 = layers.data(name="input1", shape=[13, 11], dtype='float32')
+            out = layers.sum([input0,input1])
     """
 
     helper = LayerHelper('sum', **locals())
@@ -9636,6 +9642,7 @@ def sum(x):
 def slice(input, axes, starts, ends):
     """
     Slice Operator.
+<<<<<<< HEAD
 
     Produces a slice of the input tensor along multiple axes. Similar to numpy:
     https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
@@ -9651,6 +9658,23 @@ def slice(input, axes, starts, ends):
 
     .. code-block:: text
 
+=======
+
+    Produces a slice of the input tensor along multiple axes. Similar to numpy:
+    https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
+    Slice uses `axes`, `starts` and `ends` attributes to specify the start and
+    end dimension for each axis in the list of axes, it uses this information
+    to slice the input data tensor. If a negative value is passed for any of
+    the start or end indices, it represents number of elements before the end
+    of that dimension. If the value passed to start or end is larger than
+    the n (the number of elements in this dimension), it represents n.
+    For slicing to the end of a dimension with unknown size, it is recommended
+    to pass in INT_MAX. The size of axes must be equal to starts\' and ends\'.
+    Following examples will explain how slice works:
+
+    .. code-block:: text
+
+>>>>>>> 40885c225b61fb6d7a413f6ef2a70ee73c3e995c
         Case1:
             Given:
                 data = [ [1, 2, 3, 4], [5, 6, 7, 8], ]
@@ -12097,3 +12121,116 @@ def deformable_conv(input,
 
     output = helper.append_bias_op(pre_bias, dim_start=1, dim_end=2)
     return output
+<<<<<<< HEAD
+=======
+
+
+def unfold(x, kernel_sizes, strides=1, paddings=0, dilations=1, name=None):
+    """
+
+    This function returns a col buffer of sliding local blocks of input x, also known
+    as im2col for batched 2D image tensors. For each block under the convolution filter,
+    all element will be rearranged as a column. While the convolution filter silding over
+    the input feature map, a series of such columns will be formed.
+
+    For each input :math:`X` with shape [N, C, H, W], the output shape [N, Cout, Lout]
+    can be calculated as following.
+
+    .. math::
+
+        dkernel[0] &= dilations[0] \\times (kernel\_sizes[0] - 1) + 1
+
+        dkernel[1] &= dilations[1] \\times (kernel\_sizes[1] - 1) + 1
+
+        hout &= \\frac{H + paddings[0] + paddings[2] - dkernel[0]}{strides[0]} + 1
+
+        wout &= \\frac{W + paddings[1] + paddings[3] - dkernel[1]}{strides[1]} + 1
+
+        Cout &= C \\times kernel\_sizes[0] \\times kernel\_sizes[1]
+
+        Lout &= hout \\times wout
+
+
+    Args:
+        x(Varaible):              The input tensor of format [N, C, H, W].
+        kernel_sizes(int|list):   The size of convolution kernel, should be [k_h, k_w]
+                                  or an integer k treated as [k, k].
+        strides(int|list):        The strides, should be [stride_h, stride_w]
+                                  or an integer stride treated as [sride, stride].
+                                  For default, strides will be [1, 1].
+        paddings(int|list):       The paddings of each dimension, should be
+                                  [padding_top, padding_left, padding_bottom, padding_right]
+                                  or [padding_h, padding_w] or an integer padding.
+                                  If [padding_h, padding_w] was given, it will expanded to
+                                  [padding_h, padding_w, padding_h, padding_w]. If an integer
+                                  padding was given, [padding, padding, padding, padding] will
+                                  be used. For default, paddings will be [0, 0, 0, 0]
+        dilations(int|list):      the dilations of convolution kernel, shold be
+                                  [dilation_h, dilation_w], or an integer dialtion treated as
+                                  [dilation, dilation]. For default, it will be [1, 1].
+
+    
+    Returns:
+        Variable: The tensor variable corresponding to the sliding local blocks. The output shape is [N, Cout, Lout] as decribled above. Cout is the  total number of values within each block, and Lout is the total number of such blocks.
+
+    Examples:
+
+        .. code-block:: python
+
+            import paddle.fluid as fluid
+            x = fluid.layers.data(name = 'data', shape = [3, 224, 224], dtype = 'float32')
+            y = fluid.layers.unfold(x, [3, 3], 1, 1, 1)
+    """
+
+    helper = LayerHelper("unfold", **locals())
+
+    assert len(x.shape) == 4, \
+            "input should be the format of [N, C, H, W]"
+
+    if isinstance(kernel_sizes, int):
+        kernel_sizes = [kernel_sizes, kernel_sizes]
+    else:
+        assert isinstance(kernel_sizes, list) and (len(kernel_sizes) == 2), \
+            "kernel_sizes should either be an integer or a list of two integers"
+
+    if isinstance(strides, int):
+        strides = [strides, strides]
+    else:
+        assert isinstance(strides, list) and (len(strides) == 2), \
+            "strides should either be an integer or a list of two integers"
+
+    if isinstance(dilations, int):
+        dilations = [dilations, dilations]
+    else:
+        assert isinstance(dilations, list) and (len(dilations) == 2), \
+            "dilations should either be an integer or a list of two integers"
+
+    if isinstance(paddings, int):
+        paddings = [paddings] * 4
+    elif isinstance(paddings, list):
+        if len(paddings) == 2:
+            paddings = paddings * 2
+        elif len(paddings) == 4:
+            pass
+        else:
+            raise ValueError(
+                "paddings should either be an integer or a list of 2 or 4 integers"
+            )
+    else:
+        raise ValueError(
+            "Unexpected type of paddings, it should be either an integer or a list"
+            "of 2 or 4 integers")
+
+    out = helper.create_variable_for_type_inference(dtype=x.dtype)
+    helper.append_op(
+        type="unfold",
+        inputs={"X": x},
+        outputs={"Y": out},
+        attrs={
+            "kernel_sizes": kernel_sizes,
+            "strides": strides,
+            "paddings": paddings,
+            "dilations": dilations
+        })
+    return out
+>>>>>>> 40885c225b61fb6d7a413f6ef2a70ee73c3e995c
