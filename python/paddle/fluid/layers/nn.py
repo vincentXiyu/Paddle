@@ -203,11 +203,8 @@ __all__ = [
     'where',
     'sign',
     'deformable_conv',
-<<<<<<< HEAD
     'prod',
-=======
     'unfold',
->>>>>>> 40885c225b61fb6d7a413f6ef2a70ee73c3e995c
 ]
 
 kIgnoreIndex = -100
@@ -9658,8 +9655,6 @@ def slice(input, axes, starts, ends):
 
     .. code-block:: text
 
-=======
-
     Produces a slice of the input tensor along multiple axes. Similar to numpy:
     https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
     Slice uses `axes`, `starts` and `ends` attributes to specify the start and
@@ -12121,8 +12116,6 @@ def deformable_conv(input,
 
     output = helper.append_bias_op(pre_bias, dim_start=1, dim_end=2)
     return output
-<<<<<<< HEAD
-=======
 
 
 def unfold(x, kernel_sizes, strides=1, paddings=0, dilations=1, name=None):
@@ -12233,4 +12226,3 @@ def unfold(x, kernel_sizes, strides=1, paddings=0, dilations=1, name=None):
             "dilations": dilations
         })
     return out
->>>>>>> 40885c225b61fb6d7a413f6ef2a70ee73c3e995c
