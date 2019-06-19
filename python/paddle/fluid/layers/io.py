@@ -54,6 +54,11 @@ def data(name,
     All the input variables of this function are passed in as local variables
     to the LayerHelper constructor.
 
+    Notice that paddle would only use :code:`shape` to infer the shapes of 
+    following variables in the network during compile-time. During run-time, 
+    paddle would not check whether the shape of the feeded data matches the 
+    :code:`shape` settings in this function. 
+
     Args:
        name(str): The name/alias of the function
        shape(list): Tuple declaring the shape. If :code:`append_batch_size` is 
@@ -704,11 +709,11 @@ def py_reader(capacity,
          exe = fluid.ParallelExecutor(use_cuda=True)
          for epoch_id in range(10):
              reader.start()
-                 try:
-                     while True:
-                         exe.run(fetch_list=[loss.name])
-                 except fluid.core.EOFException:
-                     reader.reset()
+             try:
+                 while True:
+                     exe.run(fetch_list=[loss.name])
+             except fluid.core.EOFException:
+                 reader.reset()
 
          fluid.io.save_inference_model(dirname='./model',
                                        feeded_var_names=[img.name, label.name],
@@ -743,8 +748,8 @@ def py_reader(capacity,
                                                        dtypes=['float32', 'int64'],
                                                        name='train_reader')
                  train_reader.decorate_paddle_reader(
-                 paddle.reader.shuffle(paddle.batch(mnist.train(), batch_size=5),
-                                       buf_size=500))
+                     paddle.reader.shuffle(paddle.batch(mnist.train(), batch_size=5),
+                                           buf_size=500))
                  train_loss = network(train_reader)  # some network definition
                  adam = fluid.optimizer.Adam(learning_rate=0.01)
                  adam.minimize(train_loss)
@@ -1142,6 +1147,8 @@ class Preprocessor(object):
 
     Examples:
           .. code-block:: python
+
+           import paddle.fluid as fluid
 
            reader = fluid.layers.io.open_files(
                filenames=['./data1.recordio', './data2.recordio'],
